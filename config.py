@@ -20,6 +20,9 @@ class Settings:
     flask_secret_key: str
     host: str
     port: int
+    auth_username: str | None
+    auth_password: str | None
+    db_path: str
 
 
 def get_settings() -> Settings:
@@ -38,5 +41,8 @@ def get_settings() -> Settings:
         flask_debug=os.getenv("FLASK_DEBUG", "false").lower() == "true",
         flask_secret_key=os.getenv("FLASK_SECRET_KEY", "change-this-secret"),
         host=os.getenv("HOST", "0.0.0.0"),
-        port=int(os.getenv("PORT", "5000")),
+        port=int(os.getenv("PORT", "8000")),
+        auth_username=os.getenv("AUTH_USERNAME"),
+        auth_password=os.getenv("AUTH_PASSWORD"),
+        db_path=os.getenv("DB_PATH", "data/app.db"),
     )

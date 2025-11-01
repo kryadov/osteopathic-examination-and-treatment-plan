@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="py-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
+  <h1 class="h3 mb-0">History</h1>
+  <div>
+    <a href="/?lang={{ lang }}" class="btn btn-secondary btn-sm">Back</a>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-striped table-hover mb-0">
+        <thead>
+        <tr>
+          <th>ID</th>
+          <th>Created</th>
+          <th>User</th>
+          <th>Lang</th>
+          <th>Provider</th>
+          <th>Model</th>
+          <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for r in rows %}
+          <tr>
+            <td>{{ r['id'] }}</td>
+            <td>{{ r['created_at'] }}</td>
+            <td>{{ r['user'] or '-' }}</td>
+            <td>{{ r['lang'] or '-' }}</td>
+            <td>{{ r['provider'] or '-' }}</td>
+            <td>{{ r['model'] or '-' }}</td>
+            <td class="text-end">
+              <a class="btn btn-sm btn-outline-primary" href="{{ url_for('history_detail', item_id=r['id'], lang=lang) }}">Open</a>
+            </td>
+          </tr>
+        {% else %}
+          <tr><td colspan="7" class="text-center text-muted">No history yet.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

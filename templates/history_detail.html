@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="py-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
+  <h1 class="h4 mb-0">History item #{{ item['id'] }}</h1>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('history', lang=lang) }}" class="btn btn-secondary btn-sm">{{ tn('btn.back') }}</a>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-12 col-lg-4">
+    <div class="card">
+      <div class="card-header">Meta</div>
+      <div class="card-body">
+        <dl class="row mb-0">
+          <dt class="col-4">Created</dt><dd class="col-8">{{ item['created_at'] }}</dd>
+          <dt class="col-4">User</dt><dd class="col-8">{{ item['user'] or '-' }}</dd>
+          <dt class="col-4">Lang</dt><dd class="col-8">{{ item['lang'] or '-' }}</dd>
+          <dt class="col-4">Provider</dt><dd class="col-8">{{ item['provider'] or '-' }}</dd>
+          <dt class="col-4">Model</dt><dd class="col-8">{{ item['model'] or '-' }}</dd>
+        </dl>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">Payload (JSON)</div>
+      <div class="card-body">
+        <pre class="mb-0" style="white-space: pre-wrap;">{{ item['payload_json'] }}</pre>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-8">
+    <div class="card mb-3">
+      <div class="card-header">Prompt</div>
+      <div class="card-body">
+        <pre class="mb-0" style="white-space: pre-wrap;">{{ item['prompt_text'] }}</pre>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">LLM Response</div>
+      <div class="card-body">
+        <pre class="mb-0" style="white-space: pre-wrap;">{{ item['response_text'] }}</pre>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
