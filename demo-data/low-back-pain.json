@@ -1,0 +1,15 @@
+{
+  "name": "Alex Johnson",
+  "age": "34",
+  "sex": "Male",
+  "chief_complaint": "Acute on chronic low back pain for 2 weeks after lifting a heavy box. Worse with prolonged sitting, improved somewhat by walking.",
+  "history": "No red flag history. Prior similar episodes x3 over 5 years. No surgeries. Occasional NSAID use. Desk job. Exercises irregularly.",
+  "red_flags": "Denies fever, weight loss, cancer history, trauma, bowel/bladder changes, saddle anesthesia, progressive neuro deficit.",
+  "vitals": "BP 118/74, HR 68, RR 14, afebrile. Antalgic posture, decreased lumbar flexion/extension. TTP paraspinals L>R, no midline tenderness.",
+  "goals": "Return to pain-free lifting and uninterrupted sleep; reduce pain to <2/10 within 2 weeks.",
+  "biomechanical": "Lumbar SD: L3-5 NSlRr, restricted extension. Pelvis: right anterior innominate. Sacrum: left-on-left torsion. Thoracolumbar fascia tight.",
+  "respiratory": "Diaphragm restriction right hemidiaphragm, decreased rib 11-12 motion. Lymphatic congestion mild in lumbar region.",
+  "metabolic": "Poor sleep, moderate stress, suboptimal hydration. No systemic inflammatory signs.",
+  "neurological": "Hypertonic paraspinals with trigger points, increased sympathetic tone to lumbar segments.",
+  "behavioral": "Sedentary work, stress from deadlines, fear-avoidance behaviors with lifting. Interested in ergonomic coaching."
+}

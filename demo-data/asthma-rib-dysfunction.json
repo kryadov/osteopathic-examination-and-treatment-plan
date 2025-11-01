@@ -1,0 +1,15 @@
+{
+  "name": "Sofia Martinez",
+  "age": "28",
+  "sex": "Female",
+  "chief_complaint": "Shortness of breath episodically with exertion and nighttime cough. Chest tightness after a recent upper respiratory infection.",
+  "history": "Mild intermittent asthma since adolescence. Uses albuterol inhaler as needed. No hospitalizations. Non-smoker.",
+  "red_flags": "No hemoptysis, no syncope, no chest pain on rest. No DVT/PE history.",
+  "vitals": "BP 112/70, HR 76, RR 18, SpO2 98% on room air. Slight accessory muscle use with deep inspiration.",
+  "goals": "Reduce nighttime cough, improve exercise tolerance, decrease reliance on rescue inhaler.",
+  "biomechanical": "Ribs 3-6 on the right with inhalation somatic dysfunction; thoracic kyphosis increased, T3-5 FRSr.",
+  "respiratory": "Diaphragmatic excursion reduced; thoracic cage compliance decreased; lymphatic flow suboptimal.",
+  "metabolic": "Mild seasonal allergies; sleep mildly fragmented; hydration adequate; nutrition balanced.",
+  "neurological": "Increased sympathetic tone T1-T6; viscerosomatic reflexes noted right more than left.",
+  "behavioral": "Stress related to graduate studies; inconsistent adherence to breathing exercises; motivated to learn self-care."
+}

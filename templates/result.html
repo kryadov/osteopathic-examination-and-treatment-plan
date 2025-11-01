@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="py-3">
+  <h1 class="h3">{{ tn('result.heading') }} {{ payload.name or 'Patient' }}</h1>
+  <p class="text-muted mb-1">{{ tn('label.llm_provider') }} {{ settings.llm_provider }}</p>
+</div>
+
+<div class="row g-3">
+  <div class="col-12 col-lg-6">
+    <div class="card">
+      <div class="card-header">{{ tn('section.summary') }}</div>
+      <div class="card-body">
+        <pre class="mb-0" style="white-space: pre-wrap;">{{ sections.summary or tn('msg.no_summary') }}</pre>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-6">
+    <div class="card">
+      <div class="card-header">{{ tn('section.diagnosis') }}</div>
+      <div class="card-body">
+        <pre class="mb-0" style="white-space: pre-wrap;">{{ sections.diagnosis or tn('msg.no_diagnosis') }}</pre>
+      </div>
+    </div>
+  </div>
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">{{ tn('section.plan') }}</div>
+      <div class="card-body">
+        <pre class="mb-0" style="white-space: pre-wrap;">{{ sections.plan or tn('msg.no_plan') }}</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12">
+    <details>
+      <summary class="text-muted">{{ tn('result.show_raw') }}</summary>
+      <pre class="mt-2" style="white-space: pre-wrap;">{{ raw }}</pre>
+    </details>
+  </div>
+</div>
+
+<div class="mt-3">
+  <a href="/?lang={{ lang }}" class="btn btn-secondary">{{ tn('btn.back') }}</a>
+</div>
+{% endblock %}

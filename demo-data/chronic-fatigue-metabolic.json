@@ -1,0 +1,15 @@
+{
+  "name": "Daniel Kim",
+  "age": "45",
+  "sex": "Male",
+  "chief_complaint": "Persistent fatigue for 6 months with non-restorative sleep and diffuse myalgias; difficulty concentrating in afternoons.",
+  "history": "Hypothyroidism on levothyroxine with stable TSH last month. No recent infections. Minimal exercise. Weight gain of 5 kg over 1 year.",
+  "red_flags": "No night sweats, no unexplained fevers, no focal neurologic deficits, no chest pain.",
+  "vitals": "BP 126/78, HR 72, RR 14, BMI 29. Posture: forward head, rounded shoulders. Reduced thoracic extension.",
+  "goals": "Improve energy, establish better sleep, begin graded activity without post-exertional malaise.",
+  "biomechanical": "Cervicothoracic junction restriction, scapular dyskinesis, myofascial tightness pectorals and upper trapezius.",
+  "respiratory": "Shallow upper-chest breathing, decreased diaphragmatic motion; mild dependent edema at ankles after long work days.",
+  "metabolic": "Suboptimal sleep hygiene, irregular meals, high refined carbs, low protein; possible micronutrient gaps.",
+  "neurological": "Sympathetic predominance; headaches 2x/week tension-type; hypersensitivity to stress.",
+  "behavioral": "High job stress, limited daylight exposure, screen time before bed; motivated to adopt small habit changes."
+}

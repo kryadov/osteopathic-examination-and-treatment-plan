@@ -1,0 +1,491 @@
+from __future__ import annotations
+
+from typing import Dict, List, Tuple
+
+# Supported languages: English (default), German, French, Greek, Russian, Spanish, Chinese, Japanese
+SUPPORTED_LANGS: List[Tuple[str, str]] = [
+    ("en", "English"),
+    ("de", "Deutsch"),
+    ("fr", "Français"),
+    ("el", "Ελληνικά"),
+    ("ru", "Русский"),
+    ("es", "Español"),
+    ("zh", "中文"),  # Simplified
+    ("ja", "日本語"),
+]
+
+# Translation dictionary: key -> per-language string
+# Keep keys stable, English values used as default
+STRINGS: Dict[str, Dict[str, str]] = {
+    # Base / Navbar
+    "app.title": {
+        "en": "Osteopathic Examination",
+        "de": "Osteopathische Untersuchung",
+        "fr": "Examen ostéopathique",
+        "el": "Οστεοπαθητική Εξέταση",
+        "ru": "Остеопатическое обследование",
+        "es": "Examen osteopático",
+        "zh": "骨科检查",
+        "ja": "オステオパシー検査",
+    },
+    "nav.brand": {
+        "en": "OsteoDiag",
+        "de": "OsteoDiag",
+        "fr": "OsteoDiag",
+        "el": "OsteoDiag",
+        "ru": "OsteoDiag",
+        "es": "OsteoDiag",
+        "zh": "OsteoDiag",
+        "ja": "OsteoDiag",
+    },
+    "nav.llm": {
+        "en": "LLM:",
+        "de": "LLM:",
+        "fr": "LLM :",
+        "el": "LLM:",
+        "ru": "LLM:",
+        "es": "LLM:",
+        "zh": "LLM：",
+        "ja": "LLM：",
+    },
+    "nav.language": {
+        "en": "Language",
+        "de": "Sprache",
+        "fr": "Langue",
+        "el": "Γλώσσα",
+        "ru": "Язык",
+        "es": "Idioma",
+        "zh": "语言",
+        "ja": "言語",
+    },
+
+    # Index page
+    "index.heading": {
+        "en": "Osteopathic Examination (WHO Five Models)",
+        "de": "Osteopathische Untersuchung (WHO, Fünf Modelle)",
+        "fr": "Examen ostéopathique (cinq modèles OMS)",
+        "el": "Οστεοπαθητική Εξέταση (Πέντε Μοντέλα ΠΟΥ)",
+        "ru": "Остеопатическое обследование (пять моделей ВОЗ)",
+        "es": "Examen osteopático (cinco modelos OMS)",
+        "zh": "骨科检查（世卫组织五大模型）",
+        "ja": "オステオパシー検査（WHO 5モデル）",
+    },
+    "btn.load_json": {
+        "en": "Load JSON into form",
+        "de": "JSON in Formular laden",
+        "fr": "Charger JSON dans le formulaire",
+        "el": "Φόρτωση JSON στη φόρμα",
+        "ru": "Загрузить JSON в форму",
+        "es": "Cargar JSON en el formulario",
+        "zh": "将 JSON 加载到表单",
+        "ja": "JSON をフォームに読み込む",
+    },
+    "btn.load_demo": {
+        "en": "Load demo",
+        "de": "Beispiel laden",
+        "fr": "Charger démo",
+        "el": "Φόρτωση δείγματος",
+        "ru": "Загрузить демо",
+        "es": "Cargar demostración",
+        "zh": "加载演示",
+        "ja": "デモを読み込む",
+    },
+    "section.patient_info": {
+        "en": "Patient Information",
+        "de": "Patienteninformationen",
+        "fr": "Informations du patient",
+        "el": "Στοιχεία ασθενούς",
+        "ru": "Информация о пациенте",
+        "es": "Información del paciente",
+        "zh": "患者信息",
+        "ja": "患者情報",
+    },
+    "label.name": {
+        "en": "Name",
+        "de": "Name",
+        "fr": "Nom",
+        "el": "Όνομα",
+        "ru": "Имя",
+        "es": "Nombre",
+        "zh": "姓名",
+        "ja": "氏名",
+    },
+    "label.age": {
+        "en": "Age",
+        "de": "Alter",
+        "fr": "Âge",
+        "el": "Ηλικία",
+        "ru": "Возраст",
+        "es": "Edad",
+        "zh": "年龄",
+        "ja": "年齢",
+    },
+    "label.sex": {
+        "en": "Sex",
+        "de": "Geschlecht",
+        "fr": "Sexe",
+        "el": "Φύλο",
+        "ru": "Пол",
+        "es": "Sexo",
+        "zh": "性别",
+        "ja": "性別",
+    },
+    "select.placeholder": {
+        "en": "Select...",
+        "de": "Auswählen...",
+        "fr": "Sélectionner...",
+        "el": "Επιλέξτε...",
+        "ru": "Выбрать...",
+        "es": "Seleccionar...",
+        "zh": "请选择...",
+        "ja": "選択...",
+    },
+    "sex.female": {
+        "en": "Female",
+        "de": "Weiblich",
+        "fr": "Femme",
+        "el": "Γυναίκα",
+        "ru": "Женский",
+        "es": "Femenino",
+        "zh": "女",
+        "ja": "女性",
+    },
+    "sex.male": {
+        "en": "Male",
+        "de": "Männlich",
+        "fr": "Homme",
+        "el": "Άνδρας",
+        "ru": "Мужской",
+        "es": "Masculino",
+        "zh": "男",
+        "ja": "男性",
+    },
+    "sex.other": {
+        "en": "Other",
+        "de": "Andere",
+        "fr": "Autre",
+        "el": "Άλλο",
+        "ru": "Другое",
+        "es": "Otro",
+        "zh": "其他",
+        "ja": "その他",
+    },
+    "label.chief_complaint": {
+        "en": "Chief complaint",
+        "de": "Hauptbeschwerde",
+        "fr": "Motif principal",
+        "el": "Κύριο σύμπτωμα",
+        "ru": "Основная жалоба",
+        "es": "Queja principal",
+        "zh": "主诉",
+        "ja": "主訴",
+    },
+    "label.history": {
+        "en": "History",
+        "de": "Anamnese",
+        "fr": "Antécédents",
+        "el": "Ιστορικό",
+        "ru": "Анамнез",
+        "es": "Historia clínica",
+        "zh": "病史",
+        "ja": "既往歴",
+    },
+    "label.red_flags": {
+        "en": "Red flags screened",
+        "de": "Red Flags geprüft",
+        "fr": "Signes d’alerte évalués",
+        "el": "Έλεγχος κόκκινων σημαιών",
+        "ru": "Проверены красные флаги",
+        "es": "Banderas rojas evaluadas",
+        "zh": "危险信号筛查",
+        "ja": "レッドフラッグの確認",
+    },
+    "label.vitals": {
+        "en": "Vitals / Physical exam",
+        "de": "Vitalwerte / Körperliche Untersuchung",
+        "fr": "Signes vitaux / Examen physique",
+        "el": "Ζωτικά / Φυσική εξέταση",
+        "ru": "Витальные показатели / Осмотр",
+        "es": "Signos vitales / Examen físico",
+        "zh": "生命体征 / 体格检查",
+        "ja": "バイタル / 身体診察",
+    },
+    "label.goals": {
+        "en": "Patient goals",
+        "de": "Ziele des Patienten",
+        "fr": "Objectifs du patient",
+        "el": "Στόχοι ασθενούς",
+        "ru": "Цели пациента",
+        "es": "Objetivos del paciente",
+        "zh": "患者目标",
+        "ja": "患者の目標",
+    },
+    "section.who_models": {
+        "en": "WHO Five Models",
+        "de": "WHO Fünf Modelle",
+        "fr": "Cinq modèles de l’OMS",
+        "el": "Τα Πέντε Μοντέλα του ΠΟΥ",
+        "ru": "Пять моделей ВОЗ",
+        "es": "Cinco modelos de la OMS",
+        "zh": "世卫组织五大模型",
+        "ja": "WHO 5モデル",
+    },
+    "label.biomechanical": {
+        "en": "Biomechanical / Structural",
+        "de": "Biomechanisch / Strukturell",
+        "fr": "Biomécanique / Structurel",
+        "el": "Βιομηχανικό / Δομικό",
+        "ru": "Биомеханический / Структурный",
+        "es": "Biomecánico / Estructural",
+        "zh": "生物力学/结构",
+        "ja": "バイオメカニカル / 構造",
+    },
+    "label.respiratory": {
+        "en": "Respiratory / Circulatory",
+        "de": "Respiratorisch / Zirkulatorisch",
+        "fr": "Respiratoire / Circulatoire",
+        "el": "Αναπνευστικό / Κυκλοφορικό",
+        "ru": "Дыхательный / Кровообращение",
+        "es": "Respiratorio / Circulatorio",
+        "zh": "呼吸/循环",
+        "ja": "呼吸 / 循環",
+    },
+    "label.metabolic": {
+        "en": "Metabolic / Nutritional",
+        "de": "Metabolisch / Ernährungsbezogen",
+        "fr": "Métabolique / Nutritionnel",
+        "el": "Μεταβολικό / Διατροφικό",
+        "ru": "Метаболический / Пищевой",
+        "es": "Metabólico / Nutricional",
+        "zh": "代谢/营养",
+        "ja": "代謝 / 栄養",
+    },
+    "label.neuro": {
+        "en": "Neurological",
+        "de": "Neurologisch",
+        "fr": "Neurologique",
+        "el": "Νευρολογικό",
+        "ru": "Неврологический",
+        "es": "Neurológico",
+        "zh": "神经系统",
+        "ja": "神経学的",
+    },
+    "label.behavioral": {
+        "en": "Behavioral / Biopsychosocial",
+        "de": "Verhaltensbezogen / Biopsychosozial",
+        "fr": "Comportemental / Biopsychosocial",
+        "el": "Συμπεριφορικό / Βιοψυχοκοινωνικό",
+        "ru": "Поведенческий / Биопсихосоциальный",
+        "es": "Conductual / Biopsicosocial",
+        "zh": "行为/生物心理社会",
+        "ja": "行動 / バイオサイコソーシャル",
+    },
+    "btn.generate": {
+        "en": "Generate Summary, Diagnosis & Plan",
+        "de": "Zusammenfassung, Diagnose & Plan erzeugen",
+        "fr": "Générer Résumé, Diagnostic et Plan",
+        "el": "Δημιουργία Περίληψης, Διάγνωσης & Πλάνου",
+        "ru": "Сгенерировать сводку, диагноз и план",
+        "es": "Generar resumen, diagnóstico y plan",
+        "zh": "生成摘要、诊断和计划",
+        "ja": "要約・診断・計画を生成",
+    },
+
+    # Result page
+    "result.heading": {
+        "en": "Results for",
+        "de": "Ergebnisse für",
+        "fr": "Résultats pour",
+        "el": "Αποτελέσματα για",
+        "ru": "Результаты для",
+        "es": "Resultados para",
+        "zh": "结果：",
+        "ja": "結果：",
+    },
+    "label.llm_provider": {
+        "en": "LLM Provider:",
+        "de": "LLM-Anbieter:",
+        "fr": "Fournisseur LLM :",
+        "el": "Πάροχος LLM:",
+        "ru": "Провайдер LLM:",
+        "es": "Proveedor LLM:",
+        "zh": "LLM 提供商：",
+        "ja": "LLM プロバイダー：",
+    },
+    "section.summary": {
+        "en": "Summary",
+        "de": "Zusammenfassung",
+        "fr": "Résumé",
+        "el": "Περίληψη",
+        "ru": "Сводка",
+        "es": "Resumen",
+        "zh": "总结",
+        "ja": "要約",
+    },
+    "section.diagnosis": {
+        "en": "Diagnosis",
+        "de": "Diagnose",
+        "fr": "Diagnostic",
+        "el": "Διάγνωση",
+        "ru": "Диагноз",
+        "es": "Diagnóstico",
+        "zh": "诊断",
+        "ja": "診断",
+    },
+    "section.plan": {
+        "en": "Treatment Plan",
+        "de": "Behandlungsplan",
+        "fr": "Plan de traitement",
+        "el": "Θεραπευτικό Πλάνο",
+        "ru": "План лечения",
+        "es": "Plan de tratamiento",
+        "zh": "治疗计划",
+        "ja": "治療計画",
+    },
+    "msg.no_summary": {
+        "en": "No summary returned.",
+        "de": "Keine Zusammenfassung zurückgegeben.",
+        "fr": "Aucun résumé retourné.",
+        "el": "Δεν επιστράφηκε περίληψη.",
+        "ru": "Сводка не получена.",
+        "es": "No se devolvió resumen.",
+        "zh": "未返回摘要。",
+        "ja": "要約が返されませんでした。",
+    },
+    "msg.no_diagnosis": {
+        "en": "No diagnosis returned.",
+        "de": "Keine Diagnose zurückgegeben.",
+        "fr": "Aucun diagnostic retourné.",
+        "el": "Δεν επιστράφηκε διάγνωση.",
+        "ru": "Диагноз не получен.",
+        "es": "No se devolvió diagnóstico.",
+        "zh": "未返回诊断。",
+        "ja": "診断が返されませんでした。",
+    },
+    "msg.no_plan": {
+        "en": "No plan returned.",
+        "de": "Kein Plan zurückgegeben.",
+        "fr": "Aucun plan retourné.",
+        "el": "Δεν επιστράφηκε πλάνο.",
+        "ru": "План не получен.",
+        "es": "No se devolvió plan.",
+        "zh": "未返回计划。",
+        "ja": "計画が返されませんでした。",
+    },
+    "btn.back": {
+        "en": "Back",
+        "de": "Zurück",
+        "fr": "Retour",
+        "el": "Πίσω",
+        "ru": "Назад",
+        "es": "Volver",
+        "zh": "返回",
+        "ja": "戻る",
+    },
+    "result.show_raw": {
+        "en": "Show raw LLM output",
+        "de": "Rohes LLM-Ergebnis anzeigen",
+        "fr": "Afficher la sortie LLM brute",
+        "el": "Εμφάνιση ακατέργαστης εξόδου LLM",
+        "ru": "Показать сырые данные LLM",
+        "es": "Mostrar salida LLM en bruto",
+        "zh": "显示原始 LLM 输出",
+        "ja": "生の LLM 出力を表示",
+    },
+
+    # Validation / flash
+    "err.chief_required": {
+        "en": "Chief complaint is required.",
+        "de": "Die Hauptbeschwerde ist erforderlich.",
+        "fr": "Le motif principal est requis.",
+        "el": "Το κύριο σύμπτωμα είναι υποχρεωτικό.",
+        "ru": "Требуется указать основную жалобу.",
+        "es": "Se requiere la queja principal.",
+        "zh": "主诉为必填项。",
+        "ja": "主訴は必須です。",
+    },
+    "err.demo_not_found": {
+        "en": "Demo file not found.",
+        "de": "Beispieldatei nicht gefunden.",
+        "fr": "Fichier de démonstration introuvable.",
+        "el": "Το αρχείο επίδειξης δεν βρέθηκε.",
+        "ru": "Демонстрационный файл не найден.",
+        "es": "Archivo de demostración no encontrado.",
+        "zh": "未找到演示文件。",
+        "ja": "デモファイルが見つかりません。",
+    },
+    "err.json_choose": {
+        "en": "Please choose a JSON file to upload.",
+        "de": "Bitte wählen Sie eine JSON-Datei zum Hochladen aus.",
+        "fr": "Veuillez choisir un fichier JSON à téléverser.",
+        "el": "Παρακαλώ επιλέξτε ένα αρχείο JSON για μεταφόρτωση.",
+        "ru": "Пожалуйста, выберите JSON-файл для загрузки.",
+        "es": "Por favor, elija un archivo JSON para cargar.",
+        "zh": "请选择要上传的 JSON 文件。",
+        "ja": "アップロードする JSON ファイルを選択してください。",
+    },
+    "err.json_invalid": {
+        "en": "Invalid JSON file.",
+        "de": "Ungültige JSON-Datei.",
+        "fr": "Fichier JSON invalide.",
+        "el": "Μη έγκυρο αρχείο JSON.",
+        "ru": "Неверный JSON-файл.",
+        "es": "Archivo JSON no válido.",
+        "zh": "无效的 JSON 文件。",
+        "ja": "無効な JSON ファイルです。",
+    },
+    "err.load_json": {
+        "en": "Error loading JSON:",
+        "de": "Fehler beim Laden von JSON:",
+        "fr": "Erreur lors du chargement du JSON :",
+        "el": "Σφάλμα φόρτωσης JSON:",
+        "ru": "Ошибка загрузки JSON:",
+        "es": "Error al cargar JSON:",
+        "zh": "加载 JSON 时出错：",
+        "ja": "JSON の読み込みエラー：",
+    },
+}
+
+DEFAULT_LANG = "en"
+
+_lang_codes = {code for code, _ in SUPPORTED_LANGS}
+
+
+def get_supported_languages() -> List[Tuple[str, str]]:
+    return SUPPORTED_LANGS
+
+
+def normalize_lang(lang: str | None) -> str:
+    if not lang:
+        return DEFAULT_LANG
+    lang = lang.lower()
+    if lang in _lang_codes:
+        return lang
+    # fallback by prefix, e.g., "de-DE" -> "de"
+    if "-" in lang:
+        pref = lang.split("-", 1)[0]
+        if pref in _lang_codes:
+            return pref
+    return DEFAULT_LANG
+
+
+def language_name(lang: str) -> str:
+    l = normalize_lang(lang)
+    for code, name in SUPPORTED_LANGS:
+        if code == l:
+            return name
+    return "English"
+
+
+def t(key: str, lang: str | None = None) -> str:
+    l = normalize_lang(lang)
+    entry = STRINGS.get(key)
+    if not entry:
+        return key
+    return entry.get(l) or entry.get(DEFAULT_LANG) or key
+
+
+def resolve_lang_from_request_args(args) -> str:
+    # expects something like flask.request.args or form
+    lang = args.get("lang") if hasattr(args, "get") else None
+    return normalize_lang(lang)
