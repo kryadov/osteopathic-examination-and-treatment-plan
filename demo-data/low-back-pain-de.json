@@ -1,0 +1,15 @@
+{
+  "name": "Alex Johnson",
+  "age": "34",
+  "sex": "Male",
+  "chief_complaint": "Akuter auf chronischer Kreuzschmerz seit 2 Wochen nach dem Heben einer schweren Kiste. Schlimmer bei längerem Sitzen, etwas besser beim Gehen.",
+  "history": "Keine Warnzeichen in der Anamnese. Ähnliche Episoden 3× in 5 Jahren. Keine Operationen. Gelegentliche NSAR-Einnahme. Bürojob. Unregelmäßige Bewegung.",
+  "red_flags": "Verneint Fieber, Gewichtsverlust, Krebsanamnese, Trauma, Stuhl-/Harnveränderungen, Reithosenanästhesie, progrediente neurologische Defizite.",
+  "vitals": "RR 118/74, HF 68, AF 14, afebril. Antalgische Haltung, verringerte LWS-Flexion/Extension. Druckschmerz paraspinal L>R, keine Mittellinienempfindlichkeit.",
+  "goals": "Schmerzfreies Heben und ununterbrochener Schlaf; Schmerz <2/10 innerhalb von 2 Wochen.",
+  "biomechanical": "LWS-SD: L3-5 NSlRr, Extension eingeschränkt. Becken: rechts anteriorer Innominate. Sakrum: links-auf-links Torsion. Thorakolumbale Faszie gespannt.",
+  "respiratory": "Zwerchfellrestriktion rechter Hemidiaphragma, verringerte Bewegung der Rippen 11-12. Leichte lymphatische Stauung im Lumbalbereich.",
+  "metabolic": "Schlechter Schlaf, moderater Stress, suboptimale Hydrierung. Keine systemischen Entzündungszeichen.",
+  "neurological": "Hypertonische Paraspinalmuskulatur mit Triggerpunkten, erhöhte sympathische Aktivität auf Lumbalsegmente.",
+  "behavioral": "Sitzende Arbeit, Stress durch Deadlines, Angst-Vermeidungsverhalten beim Heben. Interessiert an ergonomischem Coaching."
+}

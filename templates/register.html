@@ -3,26 +3,28 @@
 <div class="row justify-content-center mt-4">
   <div class="col-12 col-sm-10 col-md-6 col-lg-4">
     <div class="card shadow-sm">
-      <div class="card-header">{{ tn('login.title') }}</div>
+      <div class="card-header">{{ tn('register.title') }}</div>
       <div class="card-body">
-        <form method="post" action="{{ url_for('login', next=request.args.get('next')) }}">
+        <form method="post" action="{{ url_for('register') }}">
           <input type="hidden" name="lang" value="{{ lang }}">
-          <input type="hidden" name="next" value="{{ next_url }}">
           <div class="mb-3">
-            <label class="form-label">{{ tn('login.username') }}</label>
+            <label class="form-label">{{ tn('register.username') }}</label>
             <input type="text" class="form-control" name="username" autocomplete="username" required>
           </div>
           <div class="mb-3">
-            <label class="form-label">{{ tn('login.password') }}</label>
-            <input type="password" class="form-control" name="password" autocomplete="current-password" required>
+            <label class="form-label">{{ tn('register.password') }}</label>
+            <input type="password" class="form-control" name="password" autocomplete="new-password" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">{{ tn('register.password2') }}</label>
+            <input type="password" class="form-control" name="password2" autocomplete="new-password" required>
           </div>
           <div class="mb-3">
             <label class="form-label">{{ tn('login.captcha') }}: {{ captcha_question }}</label>
             <input type="text" class="form-control" name="captcha" autocomplete="off" required>
           </div>
           <div class="d-grid gap-2">
-            <button type="submit" class="btn btn-primary">{{ tn('login.submit') }}</button>
-            <a class="btn btn-outline-secondary" href="{{ url_for('register', lang=lang) }}">{{ tn('login.register') }}</a>
+            <button type="submit" class="btn btn-primary">{{ tn('register.submit') }}</button>
           </div>
         </form>
       </div>

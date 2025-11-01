@@ -1,0 +1,15 @@
+{
+  "name": "Alex Johnson",
+  "age": "34",
+  "sex": "Male",
+  "chief_complaint": "Lombalgie aiguë sur chronique depuis 2 semaines après avoir soulevé une boîte lourde. Pire en position assise prolongée, quelque peu améliorée par la marche.",
+  "history": "Aucun signe d'alerte. Épisodes similaires 3× sur 5 ans. Pas de chirurgie. Utilisation occasionnelle d'AINS. Travail de bureau. Exercice irrégulier.",
+  "red_flags": "Négatif pour fièvre, perte de poids, antécédents de cancer, traumatisme, troubles intestinaux/vésicaux, anesthésie en selle, déficit neurologique progressif.",
+  "vitals": "TA 118/74, FC 68, FR 14, afébrile. Posture antalgique, diminution de la flexion/extension lombaire. Sensibilité paraspinale L>R, pas de douleur en ligne médiane.",
+  "goals": "Reprendre le soulèvement sans douleur et un sommeil ininterrompu; réduire la douleur à <2/10 en 2 semaines.",
+  "biomechanical": "SD lombaire: L3-5 NSlRr, extension limitée. Bassin: innominé antérieur droit. Sacrum: torsion gauche sur gauche. Fascia thoracolombaire tendu.",
+  "respiratory": "Restriction du diaphragme hémicoupole droite, diminution du mouvement des côtes 11-12. Congestion lymphatique légère dans la région lombaire.",
+  "metabolic": "Sommeil médiocre, stress modéré, hydratation sous-optimale. Aucun signe inflammatoire systémique.",
+  "neurological": "Paraspinaux hypertoniques avec points gâchettes, tonus sympathique augmenté vers les segments lombaires.",
+  "behavioral": "Travail sédentaire, stress lié aux délais, comportements d'évitement de la douleur lors du soulèvement. Intéressé par un coaching ergonomique."
+}

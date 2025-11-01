@@ -6,7 +6,9 @@ from functools import wraps
 from urllib.parse import urlparse
 import sqlite3
 from datetime import datetime
+import random
 from flask import Flask, render_template, request, redirect, url_for, flash, session, g
+from werkzeug.security import generate_password_hash, check_password_hash
 
 from config import get_settings
 from services.llm_client import LLMClient, build_prompt, parse_sections
@@ -53,6 +55,7 @@ def teardown_db(exception):  # noqa: unused-argument
 
 def init_db():
     db = get_db()
+    # History table
     db.execute(
         """
         CREATE TABLE IF NOT EXISTS history (
@@ -68,6 +71,36 @@ def init_db():
         )
         """
     )
+    # Users table
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            is_admin INTEGER NOT NULL DEFAULT 0,
+            is_active INTEGER NOT NULL DEFAULT 1,
+            created_at TEXT NOT NULL
+        )
+        """
+    )
+    # Bootstrap admin from ENV if provided and users table is empty
+    try:
+        count = db.execute("SELECT COUNT(*) AS c FROM users").fetchone()[0]
+        if count == 0 and (settings.auth_username and settings.auth_password):
+            from werkzeug.security import generate_password_hash
+            db.execute(
+                "INSERT INTO users (username, password_hash, is_admin, is_active, created_at) VALUES (?, ?, 1, 1, ?)",
+                (
+                    settings.auth_username.strip(),
+                    generate_password_hash(settings.auth_password),
+                    datetime.utcnow().isoformat(timespec='seconds'),
+                ),
+            )
+            db.commit()
+    except Exception:
+        # ignore bootstrap errors to not break app startup
+        pass
     db.commit()
 
 
@@ -82,12 +115,58 @@ def _ensure_db():
         _db_init_done = True
 
 
+def _has_users() -> bool:
+    try:
+        db = get_db()
+        row = db.execute("SELECT COUNT(*) AS c FROM users").fetchone()
+        return (row[0] if isinstance(row, tuple) else row["c"]) > 0
+    except Exception:
+        return False
+
+
 def _auth_enabled() -> bool:
-    return bool(settings.auth_username) and bool(settings.auth_password)
+    # Enable auth if at least one user exists in DB
+    return _has_users()
 
 
 def _is_logged_in() -> bool:
     return bool(session.get('auth', False))
+
+
+def get_current_user():
+    if not _is_logged_in():
+        return None
+    user_id = session.get('user_id')
+    if not user_id:
+        return None
+    try:
+        db = get_db()
+        row = db.execute("SELECT id, username, is_admin, is_active, created_at FROM users WHERE id = ?", (user_id,)).fetchone()
+        return row
+    except Exception:
+        return None
+
+
+def admin_required(view_func):
+    @wraps(view_func)
+    def wrapper(*args, **kwargs):
+        if not _auth_enabled():
+            return redirect(url_for('index', lang=resolve_lang_from_request_args(request.args)))
+        user = get_current_user()
+        if user and user['is_admin']:
+            return view_func(*args, **kwargs)
+        flash('Admin access required.', 'warning')
+        return redirect(url_for('index', lang=resolve_lang_from_request_args(request.args)))
+    return wrapper
+
+
+@app.context_processor
+def inject_user():
+    return {
+        'current_user': get_current_user(),
+        'is_logged_in': _is_logged_in(),
+        'auth_enabled': _auth_enabled(),
+    }
 
 
 def login_required(view_func):
@@ -118,25 +197,119 @@ def login():
     def tn(key):
         return t(key, lang)
 
+    # Helper to generate a simple math captcha
+    def _new_captcha() -> str:
+        a = random.randint(1, 9)
+        b = random.randint(1, 9)
+        session['captcha_answer'] = str(a + b)
+        return f"{a} + {b} = ?"
+
     if not _auth_enabled():
-        return redirect(url_for('index', lang=lang))
+        # If no users yet, redirect to registration so user can create the first account
+        return redirect(url_for('register', lang=lang))
+
+    captcha_question = None
 
     if request.method == 'POST':
-        username = request.form.get('username', '')
-        password = request.form.get('password', '')
-        if username == (settings.auth_username or '') and password == (settings.auth_password or ''):
-            session['auth'] = True
-            session['user'] = username
-            next_url = request.args.get('next') or request.form.get('next')
-            if _is_safe_next(next_url):
-                return redirect(next_url)
-            return redirect(url_for('index', lang=lang))
+        username = (request.form.get('username') or '').strip()
+        password = request.form.get('password') or ''
+        captcha = (request.form.get('captcha') or '').strip()
+        if not captcha:
+            flash(tn('err.captcha_required'), 'warning')
+        elif captcha != session.get('captcha_answer'):
+            flash(tn('err.captcha_invalid'), 'danger')
         else:
-            flash('Invalid username or password.', 'danger')
-            # fall through to render template
+            db = get_db()
+            row = db.execute("SELECT id, username, password_hash, is_admin, is_active FROM users WHERE username = ?", (username,)).fetchone()
+            if not row or not check_password_hash(row['password_hash'], password):
+                flash(tn('err.login_invalid'), 'danger')
+            elif not row['is_active']:
+                flash(tn('err.login_blocked'), 'warning')
+            else:
+                session.clear()
+                session['auth'] = True
+                session['user'] = row['username']
+                session['user_id'] = row['id']
+                session['is_admin'] = bool(row['is_admin'])
+                next_url = request.args.get('next') or request.form.get('next')
+                if _is_safe_next(next_url):
+                    return redirect(next_url)
+                return redirect(url_for('index', lang=lang))
+        # regenerate captcha after any POST error
+        captcha_question = _new_captcha()
+        # fall through to render template on error
+    else:
+        # GET: generate captcha to display
+        captcha_question = _new_captcha()
 
     next_url = request.args.get('next') if _is_safe_next(request.args.get('next')) else url_for('index', lang=lang)
-    return render_template('login.html', settings=settings, lang=lang, langs=get_supported_languages(), tn=tn, next_url=next_url)
+    return render_template('login.html', settings=settings, lang=lang, langs=get_supported_languages(), tn=tn, next_url=next_url, captcha_question=captcha_question)
+
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    # Public self-registration: first user becomes admin; others are regular users
+    lang = resolve_lang_from_request_args(request.args if request.method == 'GET' else request.form)
+    def tn(key):
+        return t(key, lang)
+
+    # Helper to generate a simple math captcha
+    def _new_captcha() -> str:
+        a = random.randint(1, 9)
+        b = random.randint(1, 9)
+        session['captcha_answer'] = str(a + b)
+        return f"{a} + {b} = ?"
+
+    captcha_question = None
+
+    if request.method == 'POST':
+        username = (request.form.get('username') or '').strip()
+        password = request.form.get('password') or ''
+        password2 = request.form.get('password2') or ''
+        captcha = (request.form.get('captcha') or '').strip()
+        if not captcha:
+            flash(tn('err.captcha_required'), 'warning')
+        elif captcha != session.get('captcha_answer'):
+            flash(tn('err.captcha_invalid'), 'danger')
+        elif not username or not password:
+            flash('Username and password are required.', 'warning')
+        elif password != password2:
+            flash('Passwords do not match.', 'warning')
+        elif len(password) < 6:
+            flash('Password must be at least 6 characters.', 'warning')
+        else:
+            db = get_db()
+            existing = db.execute("SELECT id FROM users WHERE username = ?", (username,)).fetchone()
+            if existing:
+                flash('Username is already taken.', 'warning')
+            else:
+                is_first = not _has_users()
+                is_admin = 1 if (is_first or session.get('is_admin')) else 0
+                db.execute(
+                    "INSERT INTO users (username, password_hash, is_admin, is_active, created_at) VALUES (?, ?, ?, 1, ?)",
+                    (
+                        username,
+                        generate_password_hash(password),
+                        is_admin,
+                        datetime.utcnow().isoformat(timespec='seconds'),
+                    ),
+                )
+                db.commit()
+                # Auto-login new user
+                row = db.execute("SELECT id, username, is_admin FROM users WHERE username = ?", (username,)).fetchone()
+                session.clear()
+                session['auth'] = True
+                session['user'] = row['username']
+                session['user_id'] = row['id']
+                session['is_admin'] = bool(row['is_admin'])
+                flash('Account created successfully.', 'success')
+                return redirect(url_for('index', lang=lang))
+        # regenerate captcha after any POST error
+        captcha_question = _new_captcha()
+    else:
+        # GET: generate captcha to display
+        captcha_question = _new_captcha()
+    return render_template('register.html', settings=settings, lang=lang, langs=get_supported_languages(), tn=tn, captcha_question=captcha_question)
 
 
 @app.route('/logout', methods=['POST', 'GET'])
@@ -318,6 +491,59 @@ def history_detail(item_id: int):
         flash('History item not found.', 'warning')
         return redirect(url_for('history', lang=lang))
     return render_template('history_detail.html', item=row, settings=settings, lang=lang, langs=get_supported_languages(), tn=tn)
+
+
+# --- Admin: users management ---
+@app.route('/admin/users', methods=['GET'])
+@admin_required
+def admin_users():
+    lang = resolve_lang_from_request_args(request.args)
+    db = get_db()
+    users = db.execute("SELECT id, username, is_admin, is_active, created_at FROM users ORDER BY id ASC").fetchall()
+    def tn(key):
+        return t(key, lang)
+    return render_template('admin_users.html', users=users, settings=settings, lang=lang, langs=get_supported_languages(), tn=tn)
+
+
+@app.route('/admin/users/<int:user_id>/block', methods=['POST'])
+@admin_required
+def admin_block_user(user_id: int):
+    lang = resolve_lang_from_request_args(request.args if request.method == 'GET' else request.form)
+    me = get_current_user()
+    if me and me['id'] == user_id:
+        flash("You can't block yourself.", 'warning')
+        return redirect(url_for('admin_users', lang=lang))
+    db = get_db()
+    db.execute("UPDATE users SET is_active = 0 WHERE id = ?", (user_id,))
+    db.commit()
+    flash('User blocked.', 'success')
+    return redirect(url_for('admin_users', lang=lang))
+
+
+@app.route('/admin/users/<int:user_id>/unblock', methods=['POST'])
+@admin_required
+def admin_unblock_user(user_id: int):
+    lang = resolve_lang_from_request_args(request.args if request.method == 'GET' else request.form)
+    db = get_db()
+    db.execute("UPDATE users SET is_active = 1 WHERE id = ?", (user_id,))
+    db.commit()
+    flash('User unblocked.', 'success')
+    return redirect(url_for('admin_users', lang=lang))
+
+
+@app.route('/admin/users/<int:user_id>/delete', methods=['POST'])
+@admin_required
+def admin_delete_user(user_id: int):
+    lang = resolve_lang_from_request_args(request.args if request.method == 'GET' else request.form)
+    me = get_current_user()
+    if me and me['id'] == user_id:
+        flash("You can't delete yourself.", 'warning')
+        return redirect(url_for('admin_users', lang=lang))
+    db = get_db()
+    db.execute("DELETE FROM users WHERE id = ?", (user_id,))
+    db.commit()
+    flash('User deleted.', 'success')
+    return redirect(url_for('admin_users', lang=lang))
 
 
 if __name__ == '__main__':

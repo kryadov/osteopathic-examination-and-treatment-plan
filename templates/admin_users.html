@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row mt-4">
+  <div class="col-12">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h3>Users</h3>
+      <a class="btn btn-sm btn-success" href="{{ url_for('register', lang=lang) }}">Add user</a>
+    </div>
+    <div class="card">
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-sm align-middle">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Username</th>
+                <th>Admin</th>
+                <th>Active</th>
+                <th>Created</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for u in users %}
+                <tr>
+                  <td>{{ u.id }}</td>
+                  <td>{{ u.username }}</td>
+                  <td>{% if u.is_admin %}<span class="badge text-bg-primary">Admin</span>{% endif %}</td>
+                  <td>{% if u.is_active %}<span class="badge text-bg-success">Active</span>{% else %}<span class="badge text-bg-secondary">Blocked</span>{% endif %}</td>
+                  <td><small>{{ u.created_at }}</small></td>
+                  <td class="text-end">
+                    {% if u.id != current_user.id %}
+                      {% if u.is_active %}
+                        <form method="post" action="{{ url_for('admin_block_user', user_id=u.id, lang=lang) }}" class="d-inline">
+                          <button class="btn btn-warning btn-sm" type="submit">Block</button>
+                        </form>
+                      {% else %}
+                        <form method="post" action="{{ url_for('admin_unblock_user', user_id=u.id, lang=lang) }}" class="d-inline">
+                          <button class="btn btn-success btn-sm" type="submit">Unblock</button>
+                        </form>
+                      {% endif %}
+                      <form method="post" action="{{ url_for('admin_delete_user', user_id=u.id, lang=lang) }}" class="d-inline" onsubmit="return confirm('Delete user ' + '{{ u.username }}' + '? This cannot be undone.');">
+                        <button class="btn btn-danger btn-sm" type="submit">Delete</button>
+                      </form>
+                    {% else %}
+                      <span class="text-muted">(you)</span>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

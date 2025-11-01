@@ -20,7 +20,10 @@
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav ms-auto align-items-center">
         <li class="nav-item me-3"><span class="navbar-text text-light small">{{ tn('nav.llm') }} {{ settings.llm_provider }}</span></li>
-        <li class="nav-item me-2"><a class="nav-link" href="{{ url_for('history', lang=lang) }}">History</a></li>
+        <li class="nav-item me-2"><a class="nav-link" href="{{ url_for('history', lang=lang) }}">{{ tn('nav.history') }}</a></li>
+        {% if auth_enabled and current_user and current_user.is_admin %}
+          <li class="nav-item me-2"><a class="nav-link" href="{{ url_for('admin_users', lang=lang) }}">{{ tn('nav.users') }}</a></li>
+        {% endif %}
         <li class="nav-item dropdown me-2">
           <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
             {{ tn('nav.language') }}
@@ -31,18 +34,22 @@
             {% endfor %}
           </ul>
         </li>
-        {% if settings.auth_username and settings.auth_password %}
-          {% if session.get('auth') %}
-            <li class="nav-item">
-              <form method="post" action="{{ url_for('logout', lang=lang) }}">
-                <button class="btn btn-outline-light btn-sm" type="submit">Logout</button>
-              </form>
-            </li>
-          {% else %}
-            <li class="nav-item">
-              <a class="btn btn-outline-light btn-sm" href="{{ url_for('login', lang=lang) }}">Login</a>
-            </li>
-          {% endif %}
+        {% if is_logged_in %}
+          <li class="nav-item me-2">
+            <span class="navbar-text text-light small">{{ current_user.username }}</span>
+          </li>
+          <li class="nav-item">
+            <form method="post" action="{{ url_for('logout', lang=lang) }}">
+              <button class="btn btn-outline-light btn-sm" type="submit">{{ tn('nav.logout') }}</button>
+            </form>
+          </li>
+        {% else %}
+          <li class="nav-item me-2">
+            <a class="btn btn-outline-light btn-sm" href="{{ url_for('login', lang=lang) }}">{{ tn('nav.login') }}</a>
+          </li>
+          <li class="nav-item">
+            <a class="btn btn-outline-light btn-sm" href="{{ url_for('register', lang=lang) }}">{{ tn('nav.register') }}</a>
+          </li>
         {% endif %}
       </ul>
     </div>

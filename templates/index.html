@@ -32,7 +32,7 @@
           <div class="row g-3">
             <div class="col-12 col-md-6">
               <label class="form-label">{{ tn('label.name') }}</label>
-              <input type="text" class="form-control" name="name" placeholder="John Doe" value="{{ payload.name|default('') }}">
+              <input type="text" class="form-control" name="name" placeholder="{{ tn('ph.name') }}" value="{{ payload.name|default('') }}">
             </div>
             <div class="col-6 col-md-3">
               <label class="form-label">{{ tn('label.age') }}</label>
@@ -49,23 +49,23 @@
             </div>
             <div class="col-12">
               <label class="form-label">{{ tn('label.chief_complaint') }}<span class="text-danger">*</span></label>
-              <textarea class="form-control" name="chief_complaint" rows="2" placeholder="Main symptoms, onset, duration, aggravating/relieving factors">{{ payload.chief_complaint|default('') }}</textarea>
+              <textarea class="form-control" name="chief_complaint" rows="2" placeholder="{{ tn('ph.chief') }}">{{ payload.chief_complaint|default('') }}</textarea>
             </div>
             <div class="col-12">
               <label class="form-label">{{ tn('label.history') }}</label>
-              <textarea class="form-control" name="history" rows="2" placeholder="Medical/surgical history, medications, allergies, imaging">{{ payload.history|default('') }}</textarea>
+              <textarea class="form-control" name="history" rows="2" placeholder="{{ tn('ph.history') }}">{{ payload.history|default('') }}</textarea>
             </div>
             <div class="col-12">
               <label class="form-label">{{ tn('label.red_flags') }}</label>
-              <textarea class="form-control" name="red_flags" rows="2" placeholder="If any red flags present, note and consider referral">{{ payload.red_flags|default('') }}</textarea>
+              <textarea class="form-control" name="red_flags" rows="2" placeholder="{{ tn('ph.red_flags') }}">{{ payload.red_flags|default('') }}</textarea>
             </div>
             <div class="col-12">
               <label class="form-label">{{ tn('label.vitals') }}</label>
-              <textarea class="form-control" name="vitals" rows="2" placeholder="BP, HR, RR, SpO2, posture, gait, ROM, tenderness">{{ payload.vitals|default('') }}</textarea>
+              <textarea class="form-control" name="vitals" rows="2" placeholder="{{ tn('ph.vitals') }}">{{ payload.vitals|default('') }}</textarea>
             </div>
             <div class="col-12">
               <label class="form-label">{{ tn('label.goals') }}</label>
-              <textarea class="form-control" name="goals" rows="2" placeholder="Desired outcomes, functional goals">{{ payload.goals|default('') }}</textarea>
+              <textarea class="form-control" name="goals" rows="2" placeholder="{{ tn('ph.goals') }}">{{ payload.goals|default('') }}</textarea>
             </div>
           </div>
         </div>
@@ -78,23 +78,23 @@
         <div class="card-body">
           <div class="mb-3">
             <label class="form-label">{{ tn('label.biomechanical') }}</label>
-            <textarea class="form-control" name="biomechanical" rows="2" placeholder="Somatic dysfunctions, posture, fascial restrictions">{{ payload.biomechanical|default('') }}</textarea>
+            <textarea class="form-control" name="biomechanical" rows="2" placeholder="{{ tn('ph.biomechanical') }}">{{ payload.biomechanical|default('') }}</textarea>
           </div>
           <div class="mb-3">
             <label class="form-label">{{ tn('label.respiratory') }}</label>
-            <textarea class="form-control" name="respiratory" rows="2" placeholder="Breathing pattern, rib motion, lymphatic/venous return">{{ payload.respiratory|default('') }}</textarea>
+            <textarea class="form-control" name="respiratory" rows="2" placeholder="{{ tn('ph.respiratory') }}">{{ payload.respiratory|default('') }}</textarea>
           </div>
           <div class="mb-3">
             <label class="form-label">{{ tn('label.metabolic') }}</label>
-            <textarea class="form-control" name="metabolic" rows="2" placeholder="Endocrine, inflammatory status, nutrition, sleep">{{ payload.metabolic|default('') }}</textarea>
+            <textarea class="form-control" name="metabolic" rows="2" placeholder="{{ tn('ph.metabolic') }}">{{ payload.metabolic|default('') }}</textarea>
           </div>
           <div class="mb-3">
             <label class="form-label">{{ tn('label.neuro') }}</label>
-            <textarea class="form-control" name="neurological" rows="2" placeholder="Autonomic balance, pain modulation, central/peripheral findings">{{ payload.neurological|default('') }}</textarea>
+            <textarea class="form-control" name="neurological" rows="2" placeholder="{{ tn('ph.neurological') }}">{{ payload.neurological|default('') }}</textarea>
           </div>
           <div class="mb-3">
             <label class="form-label">{{ tn('label.behavioral') }}</label>
-            <textarea class="form-control" name="behavioral" rows="2" placeholder="Stress, coping, beliefs, social factors, work">{{ payload.behavioral|default('') }}</textarea>
+            <textarea class="form-control" name="behavioral" rows="2" placeholder="{{ tn('ph.behavioral') }}">{{ payload.behavioral|default('') }}</textarea>
           </div>
         </div>
       </div>
