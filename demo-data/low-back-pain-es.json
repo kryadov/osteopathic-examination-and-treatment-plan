@@ -1,0 +1,15 @@
+{
+  "name": "Alex Johnson",
+  "age": "34",
+  "sex": "Male",
+  "chief_complaint": "Lumbalgia aguda sobre crónica desde hace 2 semanas tras levantar una caja pesada. Peor con sedestación prolongada, mejora algo al caminar.",
+  "history": "Sin antecedentes de banderas rojas. Episodios similares 3× en 5 años. Sin cirugías. Uso ocasional de AINE. Trabajo de oficina. Ejercicio irregular.",
+  "red_flags": "Niega fiebre, pérdida de peso, antecedentes de cáncer, traumatismo, cambios en intestino/vejiga, anestesia en silla de montar, déficit neurológico progresivo.",
+  "vitals": "TA 118/74, FC 68, FR 14, afebril. Postura antálgica, disminución de la flexión/extensión lumbar. Dolor a la palpación paravertebral I>D, sin dolor en la línea media.",
+  "goals": "Volver a levantar sin dolor y dormir sin interrupciones; reducir el dolor a <2/10 en 2 semanas.",
+  "biomechanical": "SD lumbar: L3-5 NSlRr, extensión restringida. Pelvis: innominado anterior derecho. Sacro: torsión izquierda sobre izquierda. Fascia toracolumbar tensa.",
+  "respiratory": "Restricción del hemidiafragma derecho, disminución del movimiento de las costillas 11-12. Congestión linfática leve en la región lumbar.",
+  "metabolic": "Sueño deficiente, estrés moderado, hidratación subóptima. Sin signos de inflamación sistémica.",
+  "neurological": "Paravertebrales hipertónicos con puntos gatillo, aumento del tono simpático hacia los segmentos lumbares.",
+  "behavioral": "Trabajo sedentario, estrés por plazos, conductas de evitación por temor al levantar. Interesado en asesoría ergonómica."
+}
