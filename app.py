@@ -7,7 +7,10 @@ from urllib.parse import urlparse
 import sqlite3
 from datetime import datetime
 import random
-from flask import Flask, render_template, request, redirect, url_for, flash, session, g, jsonify
+import io
+import re
+import textwrap
+from flask import Flask, render_template, request, redirect, url_for, flash, session, g, jsonify, send_file
 from werkzeug.security import generate_password_hash, check_password_hash
 
 try:
@@ -673,7 +676,161 @@ def result_page(history_id: int):
         'diagnosis': render_markdown_safe(sections.get('diagnosis', '')),
         'plan': render_markdown_safe(sections.get('plan', '')),
     }
-    return render_template('result.html', payload=payload, sections=sections, sections_html=sections_html, raw=resp_text, settings=settings, lang=lang, langs=get_supported_languages(), tn=tn)
+    return render_template('result.html', payload=payload, sections=sections, sections_html=sections_html, raw=resp_text, history_id=history_id, settings=settings, lang=lang, langs=get_supported_languages(), tn=tn)
+
+
+@app.route('/result/<int:history_id>/download.pdf', methods=['GET'])
+@login_required
+def result_download_pdf(history_id: int):
+    lang = resolve_lang_from_request_args(request.args)
+    db = get_db()
+    row = db.execute("SELECT * FROM history WHERE id = ?", (history_id,)).fetchone()
+    if not row:
+        flash('History item not found.', 'warning')
+        return redirect(url_for('history', lang=lang))
+    try:
+        payload = json.loads(row['payload_json']) if row['payload_json'] else {}
+    except Exception:
+        payload = {}
+    # Try to import reportlab
+    try:
+        from reportlab.pdfgen import canvas  # type: ignore
+        from reportlab.lib.pagesizes import A4  # type: ignore
+        from reportlab.lib.units import cm  # type: ignore
+    except Exception:
+        flash('PDF export is not available on this server (missing reportlab).', 'warning')
+        return redirect(url_for('result_page', history_id=history_id, lang=lang))
+
+    sections = parse_sections(row['response_text'] or '')
+
+    buf = io.BytesIO()
+    c = canvas.Canvas(buf, pagesize=A4)
+    width, height = A4
+
+    def slug(s: str) -> str:
+        s = (s or '').lower()
+        s = re.sub(r'[^a-z0-9]+', '-', s)
+        s = s.strip('-')
+        return s or 'patient'
+
+    # Compose content
+    margin = 2 * cm
+    text = c.beginText(margin, height - margin)
+    text.setFont("Helvetica-Bold", 16)
+    title = "OsteoDiag Results"
+    name = payload.get('name') or 'Patient'
+    text.textLine(f"{title} — {name}")
+
+    text.setFont("Helvetica", 10)
+    meta = f"Provider: {row['provider']}  Model: {row['model']}  Lang: {row['lang']}  Created: {row['created_at']}"
+    text.textLine(meta)
+    text.textLine(" ")
+
+    def write_section(heading: str, body: str):
+        text.setFont("Helvetica-Bold", 12)
+        text.textLine(heading)
+        text.setFont("Helvetica", 11)
+        if not body:
+            text.textLine("-")
+            text.textLine(" ")
+            return
+        wrapped = textwrap.fill(body, width=95)
+        for line in wrapped.splitlines():
+            text.textLine(line)
+        text.textLine(" ")
+
+    write_section("Summary", sections.get('summary', ''))
+    write_section("Diagnosis", sections.get('diagnosis', ''))
+    write_section("Treatment Plan", sections.get('plan', ''))
+
+    c.drawText(text)
+    c.showPage()
+    c.save()
+    buf.seek(0)
+
+    filename = f"{slug(payload.get('name','')) or 'patient'}-result-{history_id}.pdf"
+    return send_file(buf, mimetype='application/pdf', as_attachment=True, download_name=filename)
+
+
+@app.route('/result/<int:history_id>/download.docx', methods=['GET'])
+@login_required
+def result_download_docx(history_id: int):
+    lang = resolve_lang_from_request_args(request.args)
+    db = get_db()
+    row = db.execute("SELECT * FROM history WHERE id = ?", (history_id,)).fetchone()
+    if not row:
+        flash('History item not found.', 'warning')
+        return redirect(url_for('history', lang=lang))
+    try:
+        payload = json.loads(row['payload_json']) if row['payload_json'] else {}
+    except Exception:
+        payload = {}
+
+    try:
+        from docx import Document  # type: ignore
+    except Exception:
+        flash('DOCX export is not available on this server (missing python-docx).', 'warning')
+        return redirect(url_for('result_page', history_id=history_id, lang=lang))
+
+    sections = parse_sections(row['response_text'] or '')
+
+    doc = Document()
+    title = doc.add_heading('OsteoDiag Results', level=0)
+    name = payload.get('name') or 'Patient'
+    doc.add_paragraph(f"Patient: {name}")
+    doc.add_paragraph(f"Provider: {row['provider']}  Model: {row['model']}  Lang: {row['lang']}  Created: {row['created_at']}")
+
+    def add_section(h: str, body: str):
+        doc.add_heading(h, level=1)
+        if body:
+            for para in body.split('\n\n'):
+                doc.add_paragraph(para)
+        else:
+            doc.add_paragraph('-')
+
+    add_section('Summary', sections.get('summary', ''))
+    add_section('Diagnosis', sections.get('diagnosis', ''))
+    add_section('Treatment Plan', sections.get('plan', ''))
+
+    buf = io.BytesIO()
+    doc.save(buf)
+    buf.seek(0)
+
+    def slug(s: str) -> str:
+        s = (s or '').lower()
+        s = re.sub(r'[^a-z0-9]+', '-', s)
+        s = s.strip('-')
+        return s or 'patient'
+
+    filename = f"{slug(payload.get('name','')) or 'patient'}-result-{history_id}.docx"
+    return send_file(buf, mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document', as_attachment=True, download_name=filename)
+
+
+@app.route('/history/<int:history_id>/download.json', methods=['GET'])
+@login_required
+def history_download_json(history_id: int):
+    lang = resolve_lang_from_request_args(request.args)
+    db = get_db()
+    row = db.execute("SELECT * FROM history WHERE id = ?", (history_id,)).fetchone()
+    if not row:
+        flash('History item not found.', 'warning')
+        return redirect(url_for('history', lang=lang))
+    try:
+        payload = json.loads(row['payload_json']) if row['payload_json'] else {}
+    except Exception:
+        payload = {}
+
+    def slug(s: str) -> str:
+        s = (s or '').lower()
+        s = re.sub(r'[^a-z0-9]+', '-', s)
+        s = s.strip('-')
+        return s or 'patient'
+
+    out = io.BytesIO()
+    out.write(json.dumps(payload, ensure_ascii=False, indent=2).encode('utf-8'))
+    out.seek(0)
+    filename = f"{slug(payload.get('name','')) or 'patient'}-payload-{history_id}.json"
+    return send_file(out, mimetype='application/json', as_attachment=True, download_name=filename)
 
 
 @app.route('/history', methods=['GET'])

@@ -3,6 +3,12 @@
 <div class="py-3">
   <h1 class="h3">{{ tn('result.heading') }} {{ payload.name or 'Patient' }}</h1>
   <p class="text-muted mb-1">{{ tn('label.llm_provider') }} {{ settings.llm_provider }}</p>
+  <div class="d-flex flex-wrap gap-2 mt-2 d-print-none">
+    <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('history_download_json', history_id=history_id) }}?lang={{ lang }}">{{ tn('btn.download_json') }}</a>
+    <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('result_download_pdf', history_id=history_id) }}?lang={{ lang }}">{{ tn('btn.download_pdf') }}</a>
+    <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('result_download_docx', history_id=history_id) }}?lang={{ lang }}">{{ tn('btn.download_docx') }}</a>
+    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.print()">{{ tn('btn.print') }}</button>
+  </div>
 </div>
 
 <div class="row g-3">
