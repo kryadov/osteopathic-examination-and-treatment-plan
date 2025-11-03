@@ -23,6 +23,7 @@ class Settings:
     auth_username: str | None
     auth_password: str | None
     db_path: str
+    queue_max_concurrency: int
 
 
 def get_settings() -> Settings:
@@ -45,4 +46,5 @@ def get_settings() -> Settings:
         auth_username=os.getenv("AUTH_USERNAME"),
         auth_password=os.getenv("AUTH_PASSWORD"),
         db_path=os.getenv("DB_PATH", "data/app.db"),
+        queue_max_concurrency=max(1, int(os.getenv("QUEUE_MAX_CONCURRENCY", "2"))),
     )

@@ -7,7 +7,7 @@ from urllib.parse import urlparse
 import sqlite3
 from datetime import datetime
 import random
-from flask import Flask, render_template, request, redirect, url_for, flash, session, g
+from flask import Flask, render_template, request, redirect, url_for, flash, session, g, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 
 try:
@@ -19,6 +19,7 @@ try:
 except Exception:  # pragma: no cover
     bleach = None  # type: ignore
 from markupsafe import escape
+from concurrent.futures import ThreadPoolExecutor
 
 from config import get_settings
 from services.llm_client import LLMClient, build_prompt, parse_sections
@@ -102,8 +103,133 @@ def teardown_db(exception):  # noqa: unused-argument
     close_db()
 
 
+# --- Background processing queue ---
+executor = ThreadPoolExecutor(max_workers=settings.queue_max_concurrency)
+
+
+def _new_db_conn() -> sqlite3.Connection:
+    """Create a new standalone DB connection (not tied to Flask g)."""
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    try:
+        conn.execute("PRAGMA journal_mode=WAL;")
+        conn.execute("PRAGMA synchronous=NORMAL;")
+    except Exception:
+        pass
+    return conn
+
+
+def _resolve_model_for_provider(provider: str) -> str:
+    if provider == 'OLLAMA':
+        return settings.ollama_model or 'llama3.1'
+    if provider == 'OPENAI':
+        return settings.openai_model or 'gpt-4o-mini'
+    if provider == 'GEMINI':
+        return settings.gemini_model or 'gemini-1.5-flash'
+    return ''
+
+
+def create_job(payload: dict, lang: str, user: str | None) -> int:
+    provider = settings.llm_provider
+    model = _resolve_model_for_provider(provider)
+    prompt = build_prompt(payload, lang=lang)
+    now = datetime.utcnow().isoformat(timespec='seconds')
+    db = get_db()
+    cur = db.execute(
+        """
+        INSERT INTO jobs (created_at, user, lang, status, provider, model, payload_json, prompt_text)
+        VALUES (?, ?, ?, 'queued', ?, ?, ?, ?)
+        """,
+        (
+            now,
+            user,
+            lang,
+            provider,
+            model,
+            json.dumps(payload, ensure_ascii=False),
+            prompt,
+        ),
+    )
+    db.commit()
+    job_id = cur.lastrowid
+    # Submit to executor
+    executor.submit(process_job, job_id)
+    return int(job_id)
+
+
+def process_job(job_id: int) -> None:
+    conn = _new_db_conn()
+    try:
+        row = conn.execute("SELECT * FROM jobs WHERE id = ?", (job_id,)).fetchone()
+        if not row:
+            return
+        # Mark as running
+        conn.execute(
+            "UPDATE jobs SET status = 'running', started_at = ? WHERE id = ?",
+            (datetime.utcnow().isoformat(timespec='seconds'), job_id),
+        )
+        conn.commit()
+        prompt = row['prompt_text']
+        lang = row['lang']
+        provider = row['provider']
+        model = row['model']
+        payload_json = row['payload_json']
+        user = row['user']
+
+        client = LLMClient()
+        resp = client.generate(prompt)
+        if not resp.ok:
+            conn.execute(
+                "UPDATE jobs SET status='error', error_text=?, finished_at=? WHERE id=?",
+                (str(resp.error), datetime.utcnow().isoformat(timespec='seconds'), job_id),
+            )
+            conn.commit()
+            return
+
+        # Persist to history
+        cur = conn.execute(
+            """
+            INSERT INTO history (created_at, user, lang, provider, model, payload_json, prompt_text, response_text)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                datetime.utcnow().isoformat(timespec='seconds'),
+                user,
+                lang,
+                provider,
+                model,
+                payload_json,
+                prompt,
+                resp.text,
+            ),
+        )
+        history_id = cur.lastrowid
+        conn.execute(
+            "UPDATE jobs SET status='done', response_text=?, history_id=?, finished_at=? WHERE id=?",
+            (resp.text, history_id, datetime.utcnow().isoformat(timespec='seconds'), job_id),
+        )
+        conn.commit()
+    except Exception as e:
+        try:
+            conn.execute(
+                "UPDATE jobs SET status='error', error_text=?, finished_at=? WHERE id=?",
+                (str(e), datetime.utcnow().isoformat(timespec='seconds'), job_id),
+            )
+            conn.commit()
+        except Exception:
+            pass
+    finally:
+        conn.close()
+
+
 def init_db():
     db = get_db()
+    # Improve SQLite concurrency
+    try:
+        db.execute("PRAGMA journal_mode=WAL;")
+        db.execute("PRAGMA synchronous=NORMAL;")
+    except Exception:
+        pass
     # History table
     db.execute(
         """
@@ -117,6 +243,27 @@ def init_db():
             payload_json TEXT NOT NULL,
             prompt_text TEXT NOT NULL,
             response_text TEXT NOT NULL
+        )
+        """
+    )
+    # Jobs table (background processing queue)
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS jobs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            created_at TEXT NOT NULL,
+            started_at TEXT,
+            finished_at TEXT,
+            user TEXT,
+            lang TEXT,
+            status TEXT NOT NULL,
+            provider TEXT,
+            model TEXT,
+            payload_json TEXT NOT NULL,
+            prompt_text TEXT NOT NULL,
+            response_text TEXT,
+            error_text TEXT,
+            history_id INTEGER
         )
         """
     )
@@ -461,60 +608,72 @@ def analyze():
         'behavioral': form.get('behavioral', '').strip(),
     }
 
-    # translator for templates
     def tn(key):
         return t(key, lang)
 
-    # basic validation
     if not payload['chief_complaint']:
         flash(tn('err.chief_required'), 'warning')
         return redirect(url_for('index', lang=lang))
 
-    prompt = build_prompt(payload, lang=lang)
-    client = LLMClient()
-    resp = client.generate(prompt)
+    # Enqueue background job and redirect to status page
+    job_id = create_job(payload, lang, session.get('user'))
+    return redirect(url_for('job_status', job_id=job_id, lang=lang))
 
-    if not resp.ok:
-        flash(f"LLM error: {resp.error}", 'danger')
+
+@app.route('/job/<int:job_id>', methods=['GET'])
+@login_required
+def job_status(job_id: int):
+    lang = resolve_lang_from_request_args(request.args)
+    def tn(key):
+        return t(key, lang)
+    db = get_db()
+    row = db.execute("SELECT * FROM jobs WHERE id = ?", (job_id,)).fetchone()
+    if not row:
+        flash('Job not found.', 'warning')
         return redirect(url_for('index', lang=lang))
+    return render_template('job_status.html', job=row, settings=settings, lang=lang, langs=get_supported_languages(), tn=tn)
 
-    # Persist request/response to DB
+
+@app.route('/api/job/<int:job_id>/status', methods=['GET'])
+@login_required
+def job_status_api(job_id: int):
+    db = get_db()
+    row = db.execute("SELECT status, error_text, history_id, lang FROM jobs WHERE id = ?", (job_id,)).fetchone()
+    if not row:
+        return jsonify({"ok": False, "error": "Job not found"}), 404
+    return jsonify({
+        "ok": True,
+        "status": row['status'],
+        "error_text": row['error_text'],
+        "history_id": row['history_id'],
+        "lang": row['lang'],
+    })
+
+
+@app.route('/result/<int:history_id>', methods=['GET'])
+@login_required
+def result_page(history_id: int):
+    # Keep UI language from query param; content is from stored response
+    lang = resolve_lang_from_request_args(request.args)
+    def tn(key):
+        return t(key, lang)
+    db = get_db()
+    row = db.execute("SELECT * FROM history WHERE id = ?", (history_id,)).fetchone()
+    if not row:
+        flash('History item not found.', 'warning')
+        return redirect(url_for('history', lang=lang))
     try:
-        provider = settings.llm_provider
-        if provider == 'OLLAMA':
-            model = settings.ollama_model or 'llama3.1'
-        elif provider == 'OPENAI':
-            model = settings.openai_model or 'gpt-4o-mini'
-        elif provider == 'GEMINI':
-            model = settings.gemini_model or 'gemini-1.5-flash'
-        else:
-            model = ''
-        db = get_db()
-        db.execute(
-            "INSERT INTO history (created_at, user, lang, provider, model, payload_json, prompt_text, response_text) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-            (
-                datetime.utcnow().isoformat(timespec='seconds'),
-                session.get('user'),
-                lang,
-                provider,
-                model,
-                json.dumps(payload, ensure_ascii=False),
-                prompt,
-                resp.text,
-            ),
-        )
-        db.commit()
-    except Exception as e:
-        # Non-fatal: just log via flash for now
-        flash(f"Warning: failed to store history: {e}", 'warning')
-
-    sections = parse_sections(resp.text)
+        payload = json.loads(row['payload_json']) if row['payload_json'] else {}
+    except Exception:
+        payload = {}
+    resp_text = row['response_text'] or ''
+    sections = parse_sections(resp_text)
     sections_html = {
         'summary': render_markdown_safe(sections.get('summary', '')),
         'diagnosis': render_markdown_safe(sections.get('diagnosis', '')),
         'plan': render_markdown_safe(sections.get('plan', '')),
     }
-    return render_template('result.html', payload=payload, sections=sections, sections_html=sections_html, raw=resp.text, settings=settings, lang=lang, langs=get_supported_languages(), tn=tn)
+    return render_template('result.html', payload=payload, sections=sections, sections_html=sections_html, raw=resp_text, settings=settings, lang=lang, langs=get_supported_languages(), tn=tn)
 
 
 @app.route('/history', methods=['GET'])

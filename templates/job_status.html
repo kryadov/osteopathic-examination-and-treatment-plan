@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="py-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
+  <h1 class="h4 mb-0">{{ tn('index.heading') }}</h1>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('index', lang=lang) }}" class="btn btn-secondary btn-sm">{{ tn('btn.back') }}</a>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">Background processing</div>
+  <div class="card-body">
+    <p class="mb-2">Your analysis is being processed in the background. You can safely reload or leave this page; processing will continue.</p>
+    <dl class="row mb-0">
+      <dt class="col-3 col-md-2">Job ID</dt><dd class="col-9 col-md-10">{{ job['id'] }}</dd>
+      <dt class="col-3 col-md-2">Status</dt><dd class="col-9 col-md-10"><span id="job-status" class="badge text-bg-secondary">{{ job['status'] }}</span></dd>
+      <dt class="col-3 col-md-2">Created</dt><dd class="col-9 col-md-10">{{ job['created_at'] }}</dd>
+      {% if job['started_at'] %}<dt class="col-3 col-md-2">Started</dt><dd class="col-9 col-md-10" id="started-at">{{ job['started_at'] }}</dd>{% endif %}
+      {% if job['finished_at'] %}<dt class="col-3 col-md-2">Finished</dt><dd class="col-9 col-md-10" id="finished-at">{{ job['finished_at'] }}</dd>{% endif %}
+    </dl>
+    <div id="job-error" class="alert alert-danger mt-3 d-none" role="alert"></div>
+    <div class="mt-3">
+      <button class="btn btn-outline-secondary btn-sm" onclick="pollOnce()">Refresh status now</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const jobId = Number('{{ job["id"] }}');
+  const lang = encodeURIComponent('{{ lang }}');
+  const statusEl = document.getElementById('job-status');
+  const errEl = document.getElementById('job-error');
+  let timer = null;
+
+  function updateBadge(status) {
+    statusEl.textContent = status;
+    statusEl.className = 'badge';
+    if (status === 'queued') statusEl.classList.add('text-bg-secondary');
+    else if (status === 'running') statusEl.classList.add('text-bg-info');
+    else if (status === 'done') statusEl.classList.add('text-bg-success');
+    else if (status === 'error') statusEl.classList.add('text-bg-danger');
+  }
+
+  async function pollOnce() {
+    try {
+      const res = await fetch(`/api/job/${jobId}/status`);
+      if (!res.ok) throw new Error('Network error');
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || 'Unknown error');
+      updateBadge(data.status);
+      if (data.status === 'done' && data.history_id) {
+        // redirect to result page
+        window.location.href = `/result/${data.history_id}?lang=${lang}`;
+        return;
+      }
+      if (data.status === 'error') {
+        if (errEl) {
+          errEl.textContent = data.error_text || 'Unknown error during processing';
+          errEl.classList.remove('d-none');
+        }
+        if (timer) { clearInterval(timer); timer = null; }
+      }
+    } catch (e) {
+      // Keep polling; transient failure is acceptable
+      console.warn('Poll error', e);
+    }
+  }
+
+  timer = setInterval(pollOnce, 2000);
+  // Initial poll sooner
+  setTimeout(pollOnce, 300);
+</script>
+{% endblock %}
