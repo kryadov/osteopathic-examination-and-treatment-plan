@@ -10,9 +10,58 @@ import random
 from flask import Flask, render_template, request, redirect, url_for, flash, session, g
 from werkzeug.security import generate_password_hash, check_password_hash
 
+try:
+    import markdown as md  # type: ignore
+except Exception:  # pragma: no cover
+    md = None  # type: ignore
+try:
+    import bleach  # type: ignore
+except Exception:  # pragma: no cover
+    bleach = None  # type: ignore
+from markupsafe import escape
+
 from config import get_settings
 from services.llm_client import LLMClient, build_prompt, parse_sections
 from services.i18n import t, get_supported_languages, resolve_lang_from_request_args, language_name
+
+# --- Markdown rendering (safe) ---
+ALLOWED_TAGS = [
+    'p', 'a', 'strong', 'em', 'ul', 'ol', 'li', 'code', 'pre', 'blockquote', 'hr', 'br',
+    'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'table', 'thead', 'tbody', 'tr', 'th', 'td'
+]
+ALLOWED_ATTRS = {
+    'a': ['href', 'title', 'rel', 'target'],
+    'code': ['class'],
+    'th': ['colspan', 'rowspan'],
+    'td': ['colspan', 'rowspan'],
+}
+
+def render_markdown_safe(text: str) -> str:
+    if not text:
+        return ''
+    # Fallback if packages are unavailable at runtime
+    if md is None or bleach is None:
+        # Escape HTML and convert newlines to <br>
+        return str(escape(text)).replace('\n', '<br>')
+    # Convert Markdown to HTML
+    html = md.markdown(text, extensions=['extra', 'sane_lists', 'nl2br'])
+    # Sanitize HTML
+    clean = bleach.clean(html, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRS, strip=True)
+    # Auto-linkify and set safe link attributes
+    def _target_blank(attrs, new=False):
+        href_key = (None, 'href')
+        if href_key in attrs:
+            # open external links in new tab and ensure safety
+            attrs[(None, 'target')] = '_blank'
+            existing_rel = attrs.get((None, 'rel'), '') or ''
+            rel_vals = set(existing_rel.split()) if existing_rel else set()
+            rel_vals.update(['nofollow', 'noopener', 'noreferrer'])
+            attrs[(None, 'rel')] = ' '.join(sorted(rel_vals))
+        return attrs
+    callbacks = list(getattr(bleach.linkifier, 'DEFAULT_CALLBACKS', []))
+    callbacks.append(_target_blank)
+    clean = bleach.linkify(clean, callbacks=callbacks)
+    return clean
 
 app = Flask(__name__)
 settings = get_settings()
@@ -460,7 +509,12 @@ def analyze():
         flash(f"Warning: failed to store history: {e}", 'warning')
 
     sections = parse_sections(resp.text)
-    return render_template('result.html', payload=payload, sections=sections, raw=resp.text, settings=settings, lang=lang, langs=get_supported_languages(), tn=tn)
+    sections_html = {
+        'summary': render_markdown_safe(sections.get('summary', '')),
+        'diagnosis': render_markdown_safe(sections.get('diagnosis', '')),
+        'plan': render_markdown_safe(sections.get('plan', '')),
+    }
+    return render_template('result.html', payload=payload, sections=sections, sections_html=sections_html, raw=resp.text, settings=settings, lang=lang, langs=get_supported_languages(), tn=tn)
 
 
 @app.route('/history', methods=['GET'])

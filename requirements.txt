@@ -4,3 +4,5 @@ requests==2.32.3
 httpx==0.27.2
 openai==1.47.0
 google-generativeai==0.8.3
+Markdown==3.7
+bleach==6.1.0

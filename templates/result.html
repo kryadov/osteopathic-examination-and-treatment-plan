@@ -10,7 +10,11 @@
     <div class="card">
       <div class="card-header">{{ tn('section.summary') }}</div>
       <div class="card-body">
-        <pre class="mb-0" style="white-space: pre-wrap;">{{ sections.summary or tn('msg.no_summary') }}</pre>
+        {% if sections_html.summary %}
+          <div class="markdown-body">{{ sections_html.summary | safe }}</div>
+        {% else %}
+          <div class="text-muted">{{ tn('msg.no_summary') }}</div>
+        {% endif %}
       </div>
     </div>
   </div>
@@ -18,7 +22,11 @@
     <div class="card">
       <div class="card-header">{{ tn('section.diagnosis') }}</div>
       <div class="card-body">
-        <pre class="mb-0" style="white-space: pre-wrap;">{{ sections.diagnosis or tn('msg.no_diagnosis') }}</pre>
+        {% if sections_html.diagnosis %}
+          <div class="markdown-body">{{ sections_html.diagnosis | safe }}</div>
+        {% else %}
+          <div class="text-muted">{{ tn('msg.no_diagnosis') }}</div>
+        {% endif %}
       </div>
     </div>
   </div>
@@ -26,7 +34,11 @@
     <div class="card">
       <div class="card-header">{{ tn('section.plan') }}</div>
       <div class="card-body">
-        <pre class="mb-0" style="white-space: pre-wrap;">{{ sections.plan or tn('msg.no_plan') }}</pre>
+        {% if sections_html.plan %}
+          <div class="markdown-body">{{ sections_html.plan | safe }}</div>
+        {% else %}
+          <div class="text-muted">{{ tn('msg.no_plan') }}</div>
+        {% endif %}
       </div>
     </div>
   </div>
