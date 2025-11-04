@@ -27,6 +27,7 @@ from concurrent.futures import ThreadPoolExecutor
 from config import get_settings
 from services.llm_client import LLMClient, build_prompt, parse_sections
 from services.i18n import t, get_supported_languages, resolve_lang_from_request_args, language_name
+from services import db as db_service
 
 # --- Markdown rendering (safe) ---
 ALLOWED_TAGS = [
@@ -80,25 +81,13 @@ FORM_FIELDS = [
 BASE_DIR = Path(__file__).resolve().parent
 DEMO_DIR = BASE_DIR / 'demo-data'
 
-# --- Database setup (SQLite) ---
-DB_PATH = (BASE_DIR / settings.db_path).resolve()
-DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-
 
 def get_db() -> sqlite3.Connection:
-    db = getattr(g, '_db', None)
-    if db is None:
-        # Note: isolation_level=None enables autocommit by default; keep default and commit explicitly
-        db = g._db = sqlite3.connect(DB_PATH)
-        db.row_factory = sqlite3.Row
-    return db
+    return db_service.get_db()
 
 
 def close_db(e=None):  # noqa: unused-argument
-    db = getattr(g, '_db', None)
-    if db is not None:
-        db.close()
-        g._db = None
+    return db_service.close_db(e)
 
 
 @app.teardown_appcontext
@@ -112,14 +101,7 @@ executor = ThreadPoolExecutor(max_workers=settings.queue_max_concurrency)
 
 def _new_db_conn() -> sqlite3.Connection:
     """Create a new standalone DB connection (not tied to Flask g)."""
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    try:
-        conn.execute("PRAGMA journal_mode=WAL;")
-        conn.execute("PRAGMA synchronous=NORMAL;")
-    except Exception:
-        pass
-    return conn
+    return db_service._new_db_conn()
 
 
 def _resolve_model_for_provider(provider: str) -> str:
@@ -226,81 +208,7 @@ def process_job(job_id: int) -> None:
 
 
 def init_db():
-    db = get_db()
-    # Improve SQLite concurrency
-    try:
-        db.execute("PRAGMA journal_mode=WAL;")
-        db.execute("PRAGMA synchronous=NORMAL;")
-    except Exception:
-        pass
-    # History table
-    db.execute(
-        """
-        CREATE TABLE IF NOT EXISTS history (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            created_at TEXT NOT NULL,
-            user TEXT,
-            lang TEXT,
-            provider TEXT,
-            model TEXT,
-            payload_json TEXT NOT NULL,
-            prompt_text TEXT NOT NULL,
-            response_text TEXT NOT NULL
-        )
-        """
-    )
-    # Jobs table (background processing queue)
-    db.execute(
-        """
-        CREATE TABLE IF NOT EXISTS jobs (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            created_at TEXT NOT NULL,
-            started_at TEXT,
-            finished_at TEXT,
-            user TEXT,
-            lang TEXT,
-            status TEXT NOT NULL,
-            provider TEXT,
-            model TEXT,
-            payload_json TEXT NOT NULL,
-            prompt_text TEXT NOT NULL,
-            response_text TEXT,
-            error_text TEXT,
-            history_id INTEGER
-        )
-        """
-    )
-    # Users table
-    db.execute(
-        """
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE NOT NULL,
-            password_hash TEXT NOT NULL,
-            is_admin INTEGER NOT NULL DEFAULT 0,
-            is_active INTEGER NOT NULL DEFAULT 1,
-            created_at TEXT NOT NULL
-        )
-        """
-    )
-    # Bootstrap admin from ENV if provided and users table is empty
-    try:
-        count = db.execute("SELECT COUNT(*) AS c FROM users").fetchone()[0]
-        if count == 0 and (settings.auth_username and settings.auth_password):
-            from werkzeug.security import generate_password_hash
-            db.execute(
-                "INSERT INTO users (username, password_hash, is_admin, is_active, created_at) VALUES (?, ?, 1, 1, ?)",
-                (
-                    settings.auth_username.strip(),
-                    generate_password_hash(settings.auth_password),
-                    datetime.utcnow().isoformat(timespec='seconds'),
-                ),
-            )
-            db.commit()
-    except Exception:
-        # ignore bootstrap errors to not break app startup
-        pass
-    db.commit()
+    return db_service.init_db()
 
 
 # Flask 3 removed before_first_request; initialize DB on the first incoming request instead.
@@ -590,6 +498,115 @@ def load_json():
         return redirect(url_for('index', lang=resolve_lang_from_request_args(request.args)))
 
 
+@app.route('/save', methods=['POST'])
+@login_required
+def save_draft():
+    form = request.form
+    lang = resolve_lang_from_request_args(form)
+    payload = {
+        'name': form.get('name', '').strip(),
+        'age': form.get('age', '').strip(),
+        'sex': form.get('sex', '').strip(),
+        'chief_complaint': form.get('chief_complaint', '').strip(),
+        'history': form.get('history', '').strip(),
+        'red_flags': form.get('red_flags', '').strip(),
+        'vitals': form.get('vitals', '').strip(),
+        'goals': form.get('goals', '').strip(),
+        'biomechanical': form.get('biomechanical', '').strip(),
+        'respiratory': form.get('respiratory', '').strip(),
+        'metabolic': form.get('metabolic', '').strip(),
+        'neurological': form.get('neurological', '').strip(),
+        'behavioral': form.get('behavioral', '').strip(),
+    }
+    db = get_db()
+    now = datetime.utcnow().isoformat(timespec='seconds')
+    draft_id = form.get('draft_id')
+    user = session.get('user')
+
+    def tn(key):
+        return t(key, lang)
+
+    saved_id = None
+    if draft_id:
+        # Ownership check when auth is enabled
+        if _auth_enabled() and not session.get('is_admin'):
+            row = db.execute("SELECT id, user FROM drafts WHERE id=?", (int(draft_id),)).fetchone()
+            if not row or (row['user'] and row['user'] != user):
+                flash(tn('err.draft_not_found'), 'warning')
+                demos = _list_demo_files()
+                return render_template('index.html', settings=settings, payload=payload, demos=demos, lang=lang, langs=get_supported_languages(), tn=tn)
+        try:
+            db.execute(
+                "UPDATE drafts SET updated_at=?, user=?, lang=?, payload_json=? WHERE id=?",
+                (now, user, lang, json.dumps(payload, ensure_ascii=False), int(draft_id))
+            )
+            db.commit()
+            saved_id = int(draft_id)
+        except Exception:
+            saved_id = None
+    else:
+        cur = db.execute(
+            "INSERT INTO drafts (created_at, updated_at, user, lang, payload_json) VALUES (?, ?, ?, ?, ?)",
+            (now, now, user, lang, json.dumps(payload, ensure_ascii=False))
+        )
+        db.commit()
+        saved_id = cur.lastrowid
+
+    if saved_id:
+        flash(tn('flash.draft_saved') + f" #{saved_id}", 'success')
+    else:
+        flash(tn('flash.draft_saved'), 'success')
+    demos = _list_demo_files()
+    return render_template('index.html', settings=settings, payload=payload, demos=demos, lang=lang, langs=get_supported_languages(), tn=tn, draft_id=saved_id)
+
+
+@app.route('/draft/<int:draft_id>', methods=['GET'])
+@login_required
+def open_draft(draft_id: int):
+    lang = resolve_lang_from_request_args(request.args)
+    db = get_db()
+    row = db.execute("SELECT * FROM drafts WHERE id=?", (draft_id,)).fetchone()
+    def tn(key):
+        return t(key, lang)
+    if not row:
+        flash(tn('err.draft_not_found'), 'warning')
+        return redirect(url_for('index', lang=lang))
+    # Ownership enforcement when auth is enabled
+    if _auth_enabled() and not session.get('is_admin'):
+        owner = row['user']
+        if owner and owner != session.get('user'):
+            flash(tn('err.draft_not_found'), 'warning')
+            return redirect(url_for('index', lang=lang))
+    try:
+        payload = json.loads(row['payload_json']) if row['payload_json'] else {}
+    except Exception:
+        payload = {}
+    demos = _list_demo_files()
+    return render_template('index.html', settings=settings, payload=payload, demos=demos, lang=lang, langs=get_supported_languages(), tn=tn, draft_id=row['id'])
+
+
+@app.route('/draft/<int:draft_id>/delete', methods=['POST'])
+@login_required
+def delete_draft(draft_id: int):
+    lang = resolve_lang_from_request_args(request.args if request.method == 'GET' else request.form)
+    db = get_db()
+    row = db.execute("SELECT id, user FROM drafts WHERE id=?", (draft_id,)).fetchone()
+    def tn(key):
+        return t(key, lang)
+    if not row:
+        flash(tn('err.draft_not_found'), 'warning')
+        return redirect(url_for('history', lang=lang))
+    if _auth_enabled() and not session.get('is_admin'):
+        owner = row['user']
+        if owner and owner != session.get('user'):
+            flash(tn('err.draft_not_found'), 'warning')
+            return redirect(url_for('history', lang=lang))
+    db.execute("DELETE FROM drafts WHERE id=?", (draft_id,))
+    db.commit()
+    flash(tn('flash.draft_deleted'), 'success')
+    return redirect(url_for('history', lang=lang))
+
+
 @app.route('/analyze', methods=['POST'])
 @login_required
 def analyze():
@@ -815,6 +832,11 @@ def history_download_json(history_id: int):
     if not row:
         flash('History item not found.', 'warning')
         return redirect(url_for('history', lang=lang))
+    # Ownership enforcement when auth is enabled and user is not admin
+    if _auth_enabled() and not session.get('is_admin'):
+        if (row['user'] or None) != session.get('user'):
+            flash('History item not found.', 'warning')
+            return redirect(url_for('history', lang=lang))
     try:
         payload = json.loads(row['payload_json']) if row['payload_json'] else {}
     except Exception:
@@ -840,10 +862,49 @@ def history():
     def tn(key):
         return t(key, lang)
     db = get_db()
+    # Pagination
+    try:
+        page = int(request.args.get('page', 1) or 1)
+    except Exception:
+        page = 1
+    page = max(1, page)
+    page_size = 20
+    offset = (page - 1) * page_size
+
+    # Filter completed examinations by user when auth is enabled and user is not admin
+    is_admin = bool(session.get('is_admin'))
+    where_sql = ""
+    where_params = []
+    if _auth_enabled() and not is_admin:
+        where_sql = " WHERE user = ?"
+        where_params = [session.get('user')]
+
+    total_row = db.execute(f"SELECT COUNT(*) AS c FROM history{where_sql}", tuple(where_params)).fetchone()
+    total = (total_row[0] if isinstance(total_row, tuple) else total_row['c'])
+    pages = (total + page_size - 1) // page_size if total else 1
+
     rows = db.execute(
-        "SELECT id, created_at, user, lang, provider, model FROM history ORDER BY id DESC LIMIT 100"
+        f"SELECT id, created_at, user, lang, provider, model FROM history{where_sql} ORDER BY id DESC LIMIT ? OFFSET ?",
+        tuple(where_params + [page_size, offset])
     ).fetchall()
-    return render_template('history.html', rows=rows, settings=settings, lang=lang, langs=get_supported_languages(), tn=tn)
+
+    # Running processes (left unchanged per requirements)
+    running = db.execute(
+        "SELECT id, created_at, user, lang, provider, model, status FROM jobs WHERE status IN ('queued','running') ORDER BY id DESC"
+    ).fetchall()
+
+    # Drafts: only own drafts when auth enabled and not admin; otherwise all
+    if _auth_enabled() and not is_admin:
+        drafts = db.execute(
+            "SELECT id, created_at, updated_at, user, lang FROM drafts WHERE user = ? ORDER BY updated_at DESC LIMIT 50",
+            (session.get('user'),)
+        ).fetchall()
+    else:
+        drafts = db.execute(
+            "SELECT id, created_at, updated_at, user, lang FROM drafts ORDER BY updated_at DESC LIMIT 50"
+        ).fetchall()
+
+    return render_template('history.html', rows=rows, running=running, drafts=drafts, page=page, pages=pages, total=total, page_size=page_size, settings=settings, lang=lang, langs=get_supported_languages(), tn=tn)
 
 
 @app.route('/history/<int:item_id>', methods=['GET'])
@@ -860,6 +921,11 @@ def history_detail(item_id: int):
     if not row:
         flash('History item not found.', 'warning')
         return redirect(url_for('history', lang=lang))
+    # Ownership enforcement when auth is enabled and not admin
+    if _auth_enabled() and not session.get('is_admin'):
+        if (row['user'] or None) != session.get('user'):
+            flash('History item not found.', 'warning')
+            return redirect(url_for('history', lang=lang))
     return render_template('history_detail.html', item=row, settings=settings, lang=lang, langs=get_supported_languages(), tn=tn)
 
 

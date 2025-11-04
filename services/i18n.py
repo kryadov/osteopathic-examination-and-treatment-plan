@@ -12,6 +12,7 @@ SUPPORTED_LANGS: List[Tuple[str, str]] = [
     ("es", "Español"),
     ("zh", "中文"),  # Simplified
     ("ja", "日本語"),
+    ("pt", "Português"),
 ]
 
 # Translation dictionary: key -> per-language string
@@ -59,7 +60,7 @@ STRINGS: Dict[str, Dict[str, str]] = {
         "ja": "言語",
     },
     "nav.history": {
-        "en": "History",
+        "en": "Examinations",
         "de": "Verlauf",
         "fr": "Historique",
         "el": "Ιστορικό",
@@ -67,6 +68,18 @@ STRINGS: Dict[str, Dict[str, str]] = {
         "es": "Historial",
         "zh": "历史",
         "ja": "履歴",
+        "pt": "Exames",
+    },
+    "nav.new_exam": {
+        "en": "New examination",
+        "de": "Neue Untersuchung",
+        "fr": "Nouvel examen",
+        "el": "Νέα εξέταση",
+        "ru": "Новое обследование",
+        "es": "Nuevo examen",
+        "zh": "新建检查",
+        "ja": "新規検査",
+        "pt": "Novo exame",
     },
     "nav.users": {
         "en": "Users",
@@ -339,6 +352,71 @@ STRINGS: Dict[str, Dict[str, str]] = {
         "es": "Generar resumen, diagnóstico y plan",
         "zh": "生成摘要、诊断和计划",
         "ja": "要約・診断・計画を生成",
+        "pt": "Gerar Resumo, Diagnóstico e Plano",
+    },
+    "btn.save": {
+        "en": "Save",
+        "de": "Speichern",
+        "fr": "Enregistrer",
+        "el": "Αποθήκευση",
+        "ru": "Сохранить",
+        "es": "Guardar",
+        "zh": "保存",
+        "ja": "保存",
+        "pt": "Salvar",
+    },
+
+    "examination.item": {
+        "en": "Examination",
+        "pt": "Exame"
+    },
+    "examinations.running": {
+        "en": "Running processes",
+        "pt": "Processos em execução"
+    },
+    "msg.no_examinations": {
+        "en": "No examinations yet.",
+        "pt": "Nenhum exame ainda."
+    },
+    "examinations.drafts": {
+        "en": "Drafts",
+        "pt": "Rascunhos"
+    },
+    "msg.no_drafts": {
+        "en": "No drafts yet.",
+        "pt": "Nenhum rascunho ainda."
+    },
+    "column.id": {
+        "en": "ID",
+        "pt": "ID"
+    },
+    "column.updated": {
+        "en": "Updated",
+        "pt": "Atualizado"
+    },
+    "column.user": {
+        "en": "User",
+        "pt": "Usuário"
+    },
+    "column.lang": {
+        "en": "Language",
+        "pt": "Idioma"
+    },
+    "btn.open": {
+        "en": "Open",
+        "pt": "Abrir"
+    },
+    "btn.delete": {
+        "en": "Delete",
+        "pt": "Excluir"
+    },
+    "confirm.delete_draft": {
+        "en": "Delete this draft? This cannot be undone.",
+        "pt": "Excluir este rascunho? Esta ação não pode ser desfeita."
+    },
+    "flash.draft_deleted": {
+        "en": "Draft deleted.",
+        "pt": "Rascunho excluído."
     },
 
     # Placeholders (main page)
@@ -797,6 +875,14 @@ STRINGS: Dict[str, Dict[str, str]] = {
         "es": "Error al cargar JSON:",
         "zh": "加载 JSON 时出错：",
         "ja": "JSON の読み込みエラー：",
+    },
+    "flash.draft_saved": {
+        "en": "Draft saved.",
+        "pt": "Rascunho salvo."
+    },
+    "err.draft_not_found": {
+        "en": "Draft not found.",
+        "pt": "Rascunho não encontrado."
     },
 }
 

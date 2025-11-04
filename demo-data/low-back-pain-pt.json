@@ -1,0 +1,15 @@
+{
+  "name": "Alex Johnson",
+  "age": "34",
+  "sex": "Masculino",
+  "chief_complaint": "Lombalgia aguda sobre crônica há 2 semanas após levantar uma caixa pesada. Piora ao ficar sentado por muito tempo, melhora um pouco ao caminhar.",
+  "history": "Sem sinais de bandeiras vermelhas. Episódios semelhantes 3× em 5 anos. Sem cirurgias. Uso ocasional de AINEs. Trabalho de escritório. Exercícios irregulares.",
+  "red_flags": "Nega febre, perda de peso, histórico de câncer, trauma, alterações intestinais/urinárias, anestesia em sela, déficit neurológico progressivo.",
+  "vitals": "PA 118/74, FC 68, FR 14, afebril. Postura antálgica, flexão/extensão lombar reduzidas. Dor à palpação paravertebral D>E, sem dor na linha média.",
+  "goals": "Voltar a levantar sem dor e dormir sem interrupções; reduzir a dor para <2/10 em 2 semanas.",
+  "biomechanical": "SD lombar: L3-5 NSlRr, restrição de extensão. Pelve: inominado anterior direito. Sacro: torção esquerda sobre esquerda. Fáscia toracolombar tensa.",
+  "respiratory": "Restrição do hemidiafragma direito, diminuição do movimento das costelas 11-12. Congestão linfática leve na região lombar.",
+  "metabolic": "Sono insuficiente, estresse moderado, hidratação subótima. Sem sinais de inflamação sistêmica.",
+  "neurological": "Paravertebrais hipertônicos com pontos-gatilho, aumento do tônus simpático nos segmentos lombares.",
+  "behavioral": "Trabalho sedentário, estresse por prazos, comportamentos de evitação por medo de levantar. Interessado em orientação ergonômica."
+}
