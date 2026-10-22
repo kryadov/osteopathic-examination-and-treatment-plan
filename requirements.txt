@@ -8,3 +8,6 @@ Markdown==3.7
 bleach==6.1.0
 reportlab==4.2.5
 python-docx==1.1.2
+# eMudhra intermediate CA compromise (October 2026): certifi pulled in by the
+# HTTP client must be at least the release that drops those intermediates.
+certifi>=2026.10.19
